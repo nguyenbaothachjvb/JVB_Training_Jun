@@ -1,7 +1,12 @@
+import logging
 from fastapi import APIRouter
+from schemas.response_schema import APIResponse, ok
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/ping")
-def ping(): 
-    return {"message": "pong"}
+
+@router.get("/ping", response_model=APIResponse, status_code=200)
+def ping():
+    logger.debug("Health check /ping được gọi")
+    return ok(message="pong")

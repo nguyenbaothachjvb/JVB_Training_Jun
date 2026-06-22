@@ -2,27 +2,40 @@ import os
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError
+import redis
 
-# Các cấu hình mặc định (nên lưu trong file .env ở thực tế)
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-jvb-training-week1")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-# Mảng bộ nhớ tạm (in-memory) để lưu các token đã logout
-token_blacklist = set()
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"),
+    port=int(os.getenv("REDIS_PORT", 6379)),
+    db=int(os.getenv("REDIS_DB", 0)),
+    decode_responses=True, 
+)
 
-def blacklist_token(token: str):
+BLACKLIST_PREFIX = "blacklist:" 
+
+def blacklist_token(token: str, expires_in_seconds: int = None):
     """
-    Đưa token vào danh sách đen (Blacklist) khi user Logout
+    Đưa token vào danh sách đen (Blacklist) khi user Logout.
+    - expires_in_seconds: Thời gian (giây) token còn hiệu lực.
+      Nếu truyền vào, Redis sẽ tự động xóa key sau khoảng thời gian này (TTL).
+      Nếu không truyền, mặc định TTL = thời hạn của access token.
     """
-    token_blacklist.add(token)
+    key = BLACKLIST_PREFIX + token
+    ttl = expires_in_seconds or (ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    redis_client.setex(key, ttl, "1")
 
 def is_token_blacklisted(token: str) -> bool:
     """
-    Kiểm tra xem token đã bị vô hiệu hóa (Logout) chưa
+    Kiểm tra xem token đã bị vô hiệu hóa (Logout) chưa.
+    - Trả về True nếu key tồn tại trong Redis (token đã bị blacklist).
     """
-    return token in token_blacklist
+    key = BLACKLIST_PREFIX + token
+    return redis_client.exists(key) == 1
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     """

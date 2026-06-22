@@ -1,21 +1,17 @@
-<div align="center">
-
+::: {align="center"}
 # 🧰 Git Commands Cheatsheet
 
 > **Tài liệu tham khảo nhanh** — Tổng hợp các lệnh Git thường dùng nhất
 
-![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
-![Version](https://img.shields.io/badge/Version-2.x-blue?style=for-the-badge)
-![Language](https://img.shields.io/badge/Ngôn_ngữ-Tiếng_Việt-red?style=for-the-badge)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white) ![Version](https://img.shields.io/badge/Version-2.x-blue?style=for-the-badge) ![Language](https://img.shields.io/badge/Ngôn_ngữ-Tiếng_Việt-red?style=for-the-badge)
+:::
 
-</div>
-
----
+------------------------------------------------------------------------
 
 ## 📑 Mục lục
 
-| # | Nhóm lệnh | Mô tả |
-|:-:|-----------|-------|
+| \# | Nhóm lệnh | Mô tả |
+|:--:|----|----|
 | 1 | [🚀 Khởi tạo & Cấu hình](#-khởi-tạo--cấu-hình) | `init`, `clone`, `config` |
 | 2 | [📁 File & Staging Area](#-file--staging-area) | `add`, `status`, `diff` |
 | 3 | [💾 Commit](#-commit) | `commit`, `log` |
@@ -29,11 +25,11 @@
 | 11 | [🛠️ Tiện ích](#️-tiện-ích-khác) | `reflog`, `clean`, ... |
 | 12 | [💡 Workflow thực tế](#-quy-trình-làm-việc-thực-tế) | Feature Branch Workflow |
 
----
+------------------------------------------------------------------------
 
 ## 🚀 Khởi tạo & Cấu hình
 
-```bash
+``` bash
 # ── Khởi tạo repository mới ──────────────────────────────────
 git init
 
@@ -49,11 +45,11 @@ git clone <url>
 git clone <url> <tên-thư-mục>         # Clone vào thư mục tùy chỉnh
 ```
 
----
+------------------------------------------------------------------------
 
 ## 📁 File & Staging Area
 
-```bash
+``` bash
 # ── Xem trạng thái ───────────────────────────────────────────
 git status
 git status -s                          # Rút gọn (short)
@@ -72,11 +68,11 @@ git diff --staged                      # Đã staged, chưa commit
 git diff <branch1> <branch2>           # So sánh hai branch
 ```
 
----
+------------------------------------------------------------------------
 
 ## 💾 Commit
 
-```bash
+``` bash
 # ── Tạo commit ───────────────────────────────────────────────
 git commit -m "feat: thêm tính năng đăng nhập"
 git commit -am "fix: sửa lỗi validate"   # Add + commit luôn
@@ -94,11 +90,11 @@ git log --author="Tên"                   # Lọc theo tác giả
 git log --since="2024-01-01"             # Lọc theo ngày
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🌿 Branch (Nhánh)
 
-```bash
+``` bash
 # ── Xem danh sách ────────────────────────────────────────────
 git branch                             # Branch local
 git branch -r                          # Branch remote
@@ -122,11 +118,11 @@ git branch -D <tên-branch>            # Xóa bất kể đã merge chưa
 git push origin --delete <tên-branch> # Xóa branch trên remote
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🔀 Merge & Rebase
 
-```bash
+``` bash
 # ── Merge ────────────────────────────────────────────────────
 git merge <tên-branch>                 # Merge vào branch hiện tại
 git merge --no-ff <tên-branch>         # Luôn tạo merge commit
@@ -141,11 +137,11 @@ git merge --abort
 git rebase --abort
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🌐 Remote
 
-```bash
+``` bash
 # ── Quản lý remote ───────────────────────────────────────────
 git remote -v                          # Xem danh sách remote
 git remote add origin <url>            # Thêm remote mới
@@ -166,14 +162,13 @@ git push -u origin <tên-branch>        # Push + thiết lập tracking
 git push --tags                        # Push tất cả tags
 ```
 
-> [!WARNING]
-> `git push --force` sẽ ghi đè lịch sử remote. Chỉ dùng khi thực sự cần thiết và biết mình đang làm gì!
+> [!WARNING] `git push --force` sẽ ghi đè lịch sử remote. Chỉ dùng khi thực sự cần thiết và biết mình đang làm gì!
 
----
+------------------------------------------------------------------------
 
 ## 🔄 Hoàn tác (Undo)
 
-```bash
+``` bash
 # ── Hoàn tác thay đổi chưa staged ────────────────────────────
 git restore <tên-file>                 # Khôi phục về commit cuối
 
@@ -190,14 +185,13 @@ git revert <commit-hash>
 git revert HEAD                        # Revert commit mới nhất
 ```
 
-> [!CAUTION]
-> `git reset --hard HEAD~1` sẽ **xóa vĩnh viễn** các thay đổi chưa commit. Không thể khôi phục!
+> [!CAUTION] `git reset --hard HEAD~1` sẽ **xóa vĩnh viễn** các thay đổi chưa commit. Không thể khôi phục!
 
----
+------------------------------------------------------------------------
 
 ## 📦 Stash (Lưu tạm)
 
-```bash
+``` bash
 # ── Lưu tạm thay đổi ─────────────────────────────────────────
 git stash                              # Lưu nhanh
 git stash push -m "Đang làm dở login" # Lưu có tên mô tả
@@ -215,11 +209,11 @@ git stash drop stash@{0}              # Xóa một stash
 git stash clear                        # Xóa toàn bộ stash
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🏷️ Tag (Phiên bản)
 
-```bash
+``` bash
 # ── Tạo tag ──────────────────────────────────────────────────
 git tag v1.0.0                         # Lightweight tag
 git tag -a v1.0.0 -m "Release 1.0.0"  # Annotated tag (khuyên dùng)
@@ -237,11 +231,11 @@ git tag -d v1.0.0                      # Xóa local
 git push origin --delete v1.0.0        # Xóa remote
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🔍 Tìm kiếm & Kiểm tra
 
-```bash
+``` bash
 # ── Tìm kiếm nội dung trong code ─────────────────────────────
 git grep "từ-khóa"
 git grep -n "từ-khóa"                  # Kèm số dòng
@@ -261,11 +255,11 @@ git bisect good <commit-hash>          # Commit cũ còn tốt
 git bisect reset                       # Kết thúc bisect
 ```
 
----
+------------------------------------------------------------------------
 
 ## 🛠️ Tiện ích Khác
 
-```bash
+``` bash
 # ── Xem lịch sử di chuyển HEAD ───────────────────────────────
 git reflog                             # Cứu khi lỡ reset --hard
 
@@ -280,13 +274,13 @@ git cherry-pick <commit-hash>
 git update-index --assume-unchanged <file>
 ```
 
----
+------------------------------------------------------------------------
 
 ## 💡 Quy trình làm việc thực tế
 
 ### Feature Branch Workflow
 
-```bash
+``` bash
 # ① Luôn bắt đầu từ nhánh main mới nhất
 git checkout main
 git pull origin main
@@ -311,25 +305,23 @@ git pull origin main
 git branch -d feature/user-authentication
 ```
 
----
+------------------------------------------------------------------------
 
 ## 📝 Chuẩn Commit Message (Conventional Commits)
 
-| Prefix | Ý nghĩa | Ví dụ |
-|--------|---------|-------|
-| `feat:` | ✨ Thêm tính năng mới | `feat: thêm trang đăng ký` |
-| `fix:` | 🐛 Sửa bug | `fix: sửa lỗi token hết hạn` |
-| `docs:` | 📚 Cập nhật tài liệu | `docs: cập nhật README` |
-| `style:` | 💅 Format, không đổi logic | `style: format lại code` |
-| `refactor:` | ♻️ Tái cấu trúc code | `refactor: tách service layer` |
-| `test:` | 🧪 Thêm/sửa test | `test: thêm test cho auth API` |
-| `chore:` | 🔧 Cấu hình, dependencies | `chore: cập nhật requirements.txt` |
-| `perf:` | ⚡ Tối ưu hiệu năng | `perf: cache kết quả query` |
+| Prefix      | Ý nghĩa                    | Ví dụ                              |
+|-------------|----------------------------|------------------------------------|
+| `feat:`     | ✨ Thêm tính năng mới      | `feat: thêm trang đăng ký`         |
+| `fix:`      | 🐛 Sửa bug                 | `fix: sửa lỗi token hết hạn`       |
+| `docs:`     | 📚 Cập nhật tài liệu       | `docs: cập nhật README`            |
+| `style:`    | 💅 Format, không đổi logic | `style: format lại code`           |
+| `refactor:` | ♻️ Tái cấu trúc code       | `refactor: tách service layer`     |
+| `test:`     | 🧪 Thêm/sửa test           | `test: thêm test cho auth API`     |
+| `chore:`    | 🔧 Cấu hình, dependencies  | `chore: cập nhật requirements.txt` |
+| `perf:`     | ⚡ Tối ưu hiệu năng        | `perf: cache kết quả query`        |
 
----
+------------------------------------------------------------------------
 
-<div align="center">
-
+::: {align="center"}
 *Được tạo bởi Antigravity • Cập nhật: 2026*
-
-</div>
+:::

@@ -1,71 +1,60 @@
-from fastapi import APIRouter, HTTPException
-from schemas.user_schema import UserRegister, UserLogin
-from schemas.token_schema import TokenRefreshRequest
+import logging
+from fastapi import APIRouter, Depends, HTTPException
+from schemas.response_schema import APIResponse, ok
 from database.connection import get_connection
-from utils.password_hash import hash_password, verify_password
-from utils.jwt_handler import create_access_token, create_refresh_token, verify_token
+from auth_api_demo.routers.auth import get_current_user
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.post("/register")
-def register(user: UserRegister):
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor: 
-            cursor.execute("SELECT id FROM users WHERE email = %s", (user.email,))
-            if cursor.fetchone():
-                raise HTTPException(status_code=400, detail="Email đã được đăng ký")
 
-            hashed = hash_password(user.password)
-
-            cursor.execute(
-                "INSERT INTO users (email, name, password_hash, role) VALUES (%s, %s, %s, %s)",
-                (user.email, user.name, hashed, user.role)
-            )
-        conn.commit()  # Lưu thay đổi vào DB
-    finally:
-        conn.close()   # Luôn đóng kết nối
-    return {"message": "Đăng ký thành công"}
-
-@router.post("/login")
-def login(user: UserLogin):
+@router.get("/me", response_model=APIResponse, status_code=200)
+def get_me(current_user: dict = Depends(get_current_user)):
+    email = current_user.get("sub")
+    logger.info("Lấy thông tin user: email=%s", email)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE email = %s", (user.email,))
-            db_user = cursor.fetchone()
-            
-            if not db_user or not verify_password(user.password, db_user["password_hash"]):
-                raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không chính xác")
-            
-            # 3. Sinh token (truyền thông tin cần thiết vào payload)
-            payload = {"sub": db_user["email"], "role": db_user["role"]}
-            access_token = create_access_token(data=payload)
-            refresh_token = create_refresh_token(data=payload)
-            
-            # 4. Trả về token
-            return {
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer"
-            }
+            cursor.execute(
+                "SELECT id, email, name, role, created_at FROM users WHERE email = %s",
+                (email,),
+            )
+            user = cursor.fetchone()
+
+        if not user:
+            logger.error("Không tìm thấy user trong DB: email=%s", email)
+            raise HTTPException(status_code=404, detail="Không tìm thấy user")
+
+        # Convert datetime -> string để JSON serializable
+        if user.get("created_at"):
+            user["created_at"] = user["created_at"].isoformat()
+
+        return ok(message="Lấy thông tin thành công", data=user)
     finally:
         conn.close()
 
-@router.post("/token/refresh")
-def refresh_token(request: TokenRefreshRequest):
-    payload = verify_token(request.refresh_token, expected_type="refresh")
-    
-    if not payload:
-        raise HTTPException(status_code=401, detail="Refresh token không hợp lệ hoặc đã hết hạn")
-    
-    user_email = payload.get("sub")
-    role = payload.get("role")
-    
-    new_payload = {"sub": user_email, "role": role}
-    new_access_token = create_access_token(data=new_payload)
-    
-    return {
-        "access_token": new_access_token,
-        "token_type": "bearer"
-    }
+
+@router.get("/all", response_model=APIResponse, status_code=200)
+def get_all_users(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        logger.warning(
+            "Truy cập /users/all bị từ chối – không phải admin: sub=%s",
+            current_user.get("sub"),
+        )
+        raise HTTPException(status_code=403, detail="Chỉ admin mới được truy cập")
+
+    logger.info("Admin lấy danh sách users: sub=%s", current_user.get("sub"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, email, name, role, created_at FROM users")
+            users = cursor.fetchall()
+
+        # Convert datetime -> string để JSON serializable
+        for u in users:
+            if u.get("created_at"):
+                u["created_at"] = u["created_at"].isoformat()
+
+        return ok(message="Lấy danh sách user thành công", data=users)
+    finally:
+        conn.close()
