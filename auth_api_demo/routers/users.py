@@ -2,13 +2,13 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from schemas.response_schema import APIResponse, ok
 from database.connection import get_connection
-from auth_api_demo.routers.auth import get_current_user
+from auth_api_demo.routers.auth import get_current_user, bearer_scheme
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/me", response_model=APIResponse, status_code=200)
+@router.get("/me", response_model=APIResponse, status_code=200, dependencies=[Depends(bearer_scheme)])
 def get_me(current_user: dict = Depends(get_current_user)):
     email = current_user.get("sub")
     logger.info("Lấy thông tin user: email=%s", email)
@@ -34,7 +34,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
         conn.close()
 
 
-@router.get("/all", response_model=APIResponse, status_code=200)
+@router.get("/all", response_model=APIResponse, status_code=200, dependencies=[Depends(bearer_scheme)])
 def get_all_users(current_user: dict = Depends(get_current_user)):
     if current_user.get("role") != "admin":
         logger.warning(

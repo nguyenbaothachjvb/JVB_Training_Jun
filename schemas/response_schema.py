@@ -11,7 +11,3 @@ class APIResponse(BaseModel):
 
 def ok(message: str, data: Any = None) -> APIResponse:
     return APIResponse(success=True, message=message, data=data)
-
-
-# def fail(message: str, error: str = None) -> APIResponse:
-#     return APIResponse(success=False, message=message, error=error)

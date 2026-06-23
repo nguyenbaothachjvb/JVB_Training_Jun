@@ -19,21 +19,11 @@ redis_client = redis.Redis(
 BLACKLIST_PREFIX = "blacklist:" 
 
 def blacklist_token(token: str, expires_in_seconds: int = None):
-    """
-    Đưa token vào danh sách đen (Blacklist) khi user Logout.
-    - expires_in_seconds: Thời gian (giây) token còn hiệu lực.
-      Nếu truyền vào, Redis sẽ tự động xóa key sau khoảng thời gian này (TTL).
-      Nếu không truyền, mặc định TTL = thời hạn của access token.
-    """
     key = BLACKLIST_PREFIX + token
     ttl = expires_in_seconds or (ACCESS_TOKEN_EXPIRE_MINUTES * 60)
     redis_client.setex(key, ttl, "1")
 
 def is_token_blacklisted(token: str) -> bool:
-    """
-    Kiểm tra xem token đã bị vô hiệu hóa (Logout) chưa.
-    - Trả về True nếu key tồn tại trong Redis (token đã bị blacklist).
-    """
     key = BLACKLIST_PREFIX + token
     return redis_client.exists(key) == 1
 
@@ -73,7 +63,6 @@ def verify_token(token: str, expected_type: str = "access") -> dict:
         return None
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # Kiểm tra xem token có đúng loại mong muốn (access hoặc refresh) không
         if payload.get("type") != expected_type:
             return None
         return payload

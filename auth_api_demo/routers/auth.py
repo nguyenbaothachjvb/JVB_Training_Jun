@@ -1,7 +1,6 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPBearer
 from schemas.user_schema import UserRegister, UserLogin
 from schemas.token_schema import TokenRefreshRequest
 from schemas.response_schema import APIResponse, ok
@@ -16,17 +15,15 @@ from utils.jwt_handler import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
 bearer_scheme = HTTPBearer()
 
+def get_current_user(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    """
-    Đọc header Authorization (Bearer token), kiểm tra access token và trả về payload.
-    Dùng HTTPBearer để Swagger UI tự hiển thị nút Authorize và gắn token vào header.
-    """
-    token = credentials.credentials
-    payload = verify_token(token, expected_type="access")
+    token = auth_header.split(" ")[1]
+    payload = verify_token(token)
 
     if not payload:
         logger.warning("Token không hợp lệ hoặc đã hết hạn")
@@ -34,8 +31,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_
             status_code=401,
             detail="Token không hợp lệ hoặc đã hết hạn",
         )
-
-    payload["_raw_token"] = token
     return payload
 
 
@@ -68,7 +63,6 @@ def register(user: UserRegister):
 
 @router.post("/login", response_model=APIResponse, status_code=200)
 def login(user: UserLogin):
-    """Đăng nhập, trả về access_token và refresh_token."""
     logger.info("Yêu cầu đăng nhập: email=%s", user.email)
     conn = get_connection()
     try:
@@ -123,11 +117,19 @@ def refresh_token(request: TokenRefreshRequest):
     )
 
 
-# ── POST /auth/logout ─────────────────────────────────────────────────────────
-@router.post("/logout", response_model=APIResponse, status_code=200)
-def logout(current_user: dict = Depends(get_current_user)):
+@router.post("/logout", response_model=APIResponse, status_code=200, dependencies=[Depends(bearer_scheme)])
+def logout(request: Request):
     """Đăng xuất và vô hiệu hóa access token hiện tại (blacklist)."""
-    token = current_user.get("_raw_token")
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    token = auth_header.split(" ")[1]
+
+    if not verify_token(token):
+        raise HTTPException(status_code=401, detail="Token không hợp lệ")
+
     blacklist_token(token)
-    logger.info("Đăng xuất thành công: sub=%s", current_user.get("sub"))
+    logger.info("Đăng xuất thành công")
     return ok(message="Đăng xuất thành công")
