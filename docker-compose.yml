@@ -1,0 +1,46 @@
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: auth_api_demo_database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword   # mật khẩu root (dùng nội bộ)
+      MYSQL_DATABASE: jvb_training        # tên database → DB_NAME
+      MYSQL_USER: jvb_user                # user → DB_USER
+      MYSQL_PASSWORD: jvb_password        # mật khẩu → DB_PASSWORD
+    ports:
+      - "3307:3306"                       # local:container
+    volumes:
+      - mysql_data:/var/lib/mysql                                    # lưu data DB
+      - ./database/users.sql:/docker-entrypoint-initdb.d/users.sql  # chạy SQL khi init
+
+  backend:
+    build:
+      context: .
+    container_name: auth_api_demo
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app                            # sync code local ↔ container (hot-reload)
+    depends_on:
+      - db                                # đợi db khởi động trước
+      - redis                             # đợi redis khởi động trước
+    environment:
+      DB_HOST: db                         # tên service "db" = hostname trong Docker network
+      DB_PORT: 3306
+      DB_USER: jvb_user
+      DB_PASSWORD: jvb_password
+      DB_NAME: jvb_training
+      REDIS_HOST: redis                   
+      REDIS_PORT: 6379
+
+  redis:
+    image: redis:7-alpine
+    container_name: auth_api_demo_redis
+    restart: always
+    ports:
+      - "6379:6379"                       
+
+volumes:
+  mysql_data:                             

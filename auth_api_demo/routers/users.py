@@ -25,7 +25,6 @@ def get_me(current_user: dict = Depends(get_current_user)):
             logger.error("Không tìm thấy user trong DB: email=%s", email)
             raise HTTPException(status_code=404, detail="Không tìm thấy user")
 
-        # Convert datetime -> string để JSON serializable
         if user.get("created_at"):
             user["created_at"] = user["created_at"].isoformat()
 
@@ -50,7 +49,6 @@ def get_all_users(current_user: dict = Depends(get_current_user)):
             cursor.execute("SELECT id, email, name, role, created_at FROM users")
             users = cursor.fetchall()
 
-        # Convert datetime -> string để JSON serializable
         for u in users:
             if u.get("created_at"):
                 u["created_at"] = u["created_at"].isoformat()

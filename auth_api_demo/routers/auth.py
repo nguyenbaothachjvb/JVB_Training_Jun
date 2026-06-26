@@ -47,8 +47,8 @@ def register(user: UserRegister):
 
             hashed = hash_password(user.password)
             cursor.execute(
-                "INSERT INTO users (email, name, password_hash, role) VALUES (%s, %s, %s, %s)",
-                (user.email, user.name, hashed, user.role),
+                "INSERT INTO users (email, name, password_hash) VALUES (%s, %s, %s)",
+                (user.email, user.name, hashed),
             )
         conn.commit()
         logger.info("Đăng ký thành công: email=%s", user.email)
@@ -57,7 +57,7 @@ def register(user: UserRegister):
 
     return ok(
         message="Đăng ký thành công",
-        data={"email": user.email, "name": user.name, "role": user.role},
+        data={"email": user.email, "name": user.name},
     )
 
 
@@ -96,7 +96,6 @@ def login(user: UserLogin):
 
 @router.post("/token/refresh", response_model=APIResponse, status_code=200)
 def refresh_token(request: TokenRefreshRequest):
-    """Cấp lại access_token mới từ refresh_token hợp lệ."""
     logger.info("Yêu cầu làm mới token")
     payload = verify_token(request.refresh_token, expected_type="refresh")
 
@@ -107,19 +106,25 @@ def refresh_token(request: TokenRefreshRequest):
             detail="Refresh token không hợp lệ hoặc đã hết hạn",
         )
 
+    blacklist_token(request.refresh_token, expires_in_seconds=7 * 24 * 3600)
+
     new_payload = {"sub": payload.get("sub"), "role": payload.get("role")}
     new_access_token = create_access_token(data=new_payload)
+    new_refresh_token = create_refresh_token(data=new_payload)
 
-    logger.info("Cấp lại access token thành công: sub=%s", payload.get("sub"))
+    logger.info("Cấp lại token thành công: sub=%s", payload.get("sub"))
     return ok(
-        message="Cấp lại access token thành công",
-        data={"access_token": new_access_token, "token_type": "bearer"},
+        message="Cấp lại token thành công",
+        data={
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+        },
     )
 
 
 @router.post("/logout", response_model=APIResponse, status_code=200, dependencies=[Depends(bearer_scheme)])
 def logout(request: Request):
-    """Đăng xuất và vô hiệu hóa access token hiện tại (blacklist)."""
     auth_header = request.headers.get("Authorization")
 
     if not auth_header or not auth_header.startswith("Bearer "):

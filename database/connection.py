@@ -1,13 +1,14 @@
+import os
 import pymysql
 
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "",           
-    "database": "jvb_training",
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", 3306)),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "jvb_training"),
     "charset": "utf8mb4",
-    "cursorclass": pymysql.cursors.DictCursor  
+    "cursorclass": pymysql.cursors.DictCursor
 }
 
 def get_connection():
