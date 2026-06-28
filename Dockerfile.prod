@@ -1,0 +1,53 @@
+# ================================================================
+# Dockerfile.prod — FastAPI Backend (Production)
+# Multi-stage build: giảm image size, tăng bảo mật
+# ================================================================
+
+# ── Stage 1: Builder ────────────────────────────────────────────
+# Dùng image đầy đủ để cài dependencies
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Cài dependencies vào virtual environment riêng
+# → Dễ copy sang stage 2, không lẫn với system packages
+COPY requirements.txt .
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# ── Stage 2: Runtime ────────────────────────────────────────────
+# Bắt đầu lại từ image sạch — không mang theo build tools
+FROM python:3.11-slim
+
+# Tạo user không có quyền root (bảo mật)
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup appuser
+
+WORKDIR /app
+
+# Chỉ copy venv đã cài sẵn từ stage 1 (không cài lại)
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy source code
+COPY . .
+
+# Đổi owner file sang appuser (không chạy bằng root)
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+# Dùng venv trong PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Biến môi trường cho production
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 8000
+
+# ❌ Không --reload (code đã được baked vào image)
+# ✅ --workers 4: xử lý nhiều request song song
+CMD ["uvicorn", "auth_api_demo.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4"]

@@ -5,12 +5,12 @@ services:
     container_name: auth_api_demo_database
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword   # mật khẩu root (dùng nội bộ)
-      MYSQL_DATABASE: jvb_training        # tên database → DB_NAME
-      MYSQL_USER: jvb_user                # user → DB_USER
-      MYSQL_PASSWORD: jvb_password        # mật khẩu → DB_PASSWORD
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}   # mật khẩu root (dùng nội bộ)
+      MYSQL_DATABASE: ${MYSQL_DATABASE}             # tên database → DB_NAME
+      MYSQL_USER: ${MYSQL_USER}                     # user → DB_USER
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}             # mật khẩu → DB_PASSWORD
     ports:
-      - "3307:3306"                       # local:container
+      - "3307:3306"                                 # local:container
     volumes:
       - mysql_data:/var/lib/mysql                                    # lưu data DB
       - ./database/users.sql:/docker-entrypoint-initdb.d/users.sql  # chạy SQL khi init
@@ -19,21 +19,15 @@ services:
     build:
       context: .
     container_name: auth_api_demo
-    ports:
-      - "8000:8000"
     volumes:
       - .:/app                            # sync code local ↔ container (hot-reload)
     depends_on:
       - db                                # đợi db khởi động trước
       - redis                             # đợi redis khởi động trước
+    env_file:
+      - .env                              # đọc toàn bộ biến từ file .env
     environment:
-      DB_HOST: db                         # tên service "db" = hostname trong Docker network
-      DB_PORT: 3306
-      DB_USER: jvb_user
-      DB_PASSWORD: jvb_password
-      DB_NAME: jvb_training
-      REDIS_HOST: redis                   
-      REDIS_PORT: 6379
+      DB_HOST: db                         # override: hostname nội bộ Docker (luôn là "db")
 
   redis:
     image: redis:7-alpine
@@ -42,5 +36,14 @@ services:
     ports:
       - "6379:6379"                       
 
+  nginx: 
+    image: nginx:alpine
+    container_name: auth_api_demo_nginx
+    ports: 
+      - "80:80"
+    volumes: 
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
 volumes:
   mysql_data:                             
