@@ -20,6 +20,15 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(users_router)
 
+@app.on_event("startup")
+def startup_event():
+    logger.info("Chạy kiểm tra và khởi tạo Database...")
+    try:
+        from database.init_db import init_db
+        init_db()
+    except Exception as e:
+        logger.error(f"Lỗi khi gọi init_db: {e}")
+
 def _serialize(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
