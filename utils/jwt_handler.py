@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError
+import uuid
 import redis
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-jvb-training-week1")
@@ -40,9 +41,11 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
 def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     """
     Tạo Refresh Token có thời hạn dài (mặc định 7 ngày).
+    Có chứa jti để quản lý ở database.
     """
     to_encode = data.copy()
     if expires_delta:
@@ -50,7 +53,8 @@ def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
     else:
         expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     
-    to_encode.update({"exp": expire, "type": "refresh"})
+    jti = str(uuid.uuid4())
+    to_encode.update({"exp": expire, "type": "refresh", "jti": jti})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def verify_token(token: str, expected_type: str = "access") -> dict:

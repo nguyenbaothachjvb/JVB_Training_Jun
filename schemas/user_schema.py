@@ -1,12 +1,13 @@
 from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
 
 class UserRegister(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
     email: EmailStr
-    name: str 
+    full_name: str 
     password: str = Field(min_length = 8)
     confirm_password: str = Field(min_length = 8)
 
-    @field_validator("name")
+    @field_validator("full_name")
     @classmethod
     def name_must_not_contain_numbers(cls, v):
         if any(char.isdigit() for char in v):

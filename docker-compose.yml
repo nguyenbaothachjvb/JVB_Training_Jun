@@ -13,7 +13,7 @@ services:
       - "3307:3306"                                 # local:container
     volumes:
       - mysql_data:/var/lib/mysql                                    # lưu data DB
-      - ./database/users.sql:/docker-entrypoint-initdb.d/users.sql  # chạy SQL khi init
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql  # chạy SQL khi init
 
   backend:
     build:

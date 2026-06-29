@@ -15,10 +15,13 @@ def get_me(current_user: dict = Depends(get_current_user)):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT id, email, name, role, created_at FROM users WHERE email = %s",
-                (email,),
-            )
+            cursor.execute("""
+                SELECT u.id, u.username, u.email, u.full_name, r.name as role, u.is_active, u.created_at 
+                FROM users u 
+                LEFT JOIN user_roles ur ON u.id = ur.user_id 
+                LEFT JOIN roles r ON ur.role_id = r.id 
+                WHERE u.email = %s
+            """, (email,))
             user = cursor.fetchone()
 
         if not user:
@@ -46,7 +49,12 @@ def get_all_users(current_user: dict = Depends(get_current_user)):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id, email, name, role, created_at FROM users")
+            cursor.execute("""
+                SELECT u.id, u.username, u.email, u.full_name, r.name as role, u.is_active, u.created_at 
+                FROM users u 
+                LEFT JOIN user_roles ur ON u.id = ur.user_id 
+                LEFT JOIN roles r ON ur.role_id = r.id
+            """)
             users = cursor.fetchall()
 
         for u in users:
